@@ -47,7 +47,39 @@ func main() {
 }
 
 func getUrl(w http.ResponseWriter, r *http.Request) {
+	key := r.URL.Query().Get("key")
+	port, ok := serverRing.GetNode(key)
+	if !ok {
+		return
+	}
+	fmt.Println("Port: ", port, " key: ", key)
+	server := clients[port]
+	rows, err := server.Conn.Query(context.Background(), "select * from url_table where url_id = $1", key)
+	if err != nil {
+		log.Fatal(err.Error())
+		return
+	}
 
+	var results []Response
+
+	for rows.Next() {
+		var r Response
+		err := rows.Scan(&r.URLId, &r.URL, &r.ServerShard)
+		if err != nil {
+			return
+		}
+		results = append(results, r)
+	}
+
+	jsonData, err := json.Marshal(results)
+	if err != nil {
+		http.Error(w, "Error generating JSON", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(200)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
 }
 
 func createUrl(w http.ResponseWriter, r *http.Request) {
@@ -67,13 +99,16 @@ func createUrl(w http.ResponseWriter, r *http.Request) {
 
 	// pick 5 first letter
 	urlId := result[0:5]
+	fmt.Println("urlId", urlId)
 
 	// get the server for this hash
 	port, ok := serverRing.GetNode(urlId)
 	if !ok {
 		return
 	}
+	fmt.Println("port", port)
 	server := clients[port]
+	fmt.Println("server: ", server.Port)
 	if _, err := server.Conn.Exec(context.Background(), "INSERT INTO url_table (url, url_id) VALUES ($1, $2)", url, urlId); err != nil {
 		return
 	}
