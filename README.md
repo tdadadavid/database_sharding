@@ -13,12 +13,18 @@
 * Sharding is basically taking the principles of Hashmaps over a network.
 * It helps in the Shared-Nothing Architecture. Check: [DiceDB](https://github.com/DiceDB/dice)
 
+***
+
 ### My Advice
 * When optimizing your database let sharding be your last resort, it really brings complexity.
+
+***
 
 ### Advantages
 * It improves query performance due to small index of each table.(Scalability)
 * It helps with fault-tolerance when a shard fails it does not affect other shards (Remember: `Sharded-Nothing-Architecture`)
+
+***
 
 ### Disadvantages
 * It is very complicated to do
@@ -27,3 +33,6 @@
 * The client application has to handle the complex logic of knowing which shard to establish connection with, just has the hashmap(hash func) needs to know which node to work with.
 * Joins are very impossible since shards are across different server instances
 * Rollbacks are also impossible.
+
+***
+Thanks.
